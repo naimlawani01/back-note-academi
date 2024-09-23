@@ -11,6 +11,7 @@ router = APIRouter()
 class PostCreate(BaseModel):
     teacher_id: UUID
     content: str
+    media_url: str
 
 
 @router.post("/create")
@@ -22,6 +23,7 @@ async def create_post(post: PostCreate):
     new_post = Post(
         teacher_id=post.teacher_id,
         content=post.content,
+        media_url=post.media_url,
         created_at=datetime.utcnow()
     )
     await new_post.insert()
