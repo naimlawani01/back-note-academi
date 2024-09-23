@@ -1,4 +1,5 @@
 # app/models/user.py
+from typing import Optional
 from beanie import Document
 from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID, uuid4
@@ -55,3 +56,22 @@ class UserInfo(BaseModel):
     username: str
     role: str
     link_id: UUID = Field(default_factory=uuid4)
+
+
+
+
+class UserResponse(BaseModel):
+    id: UUID
+    username: str
+    email: str
+    role: str
+
+class TeacherResponse(BaseModel):
+    id: UUID
+    bio: Optional[str]
+    location: Optional[str]
+    expertise: str
+    user: UserResponse  # Champ pour inclure les informations de l'utilisateur
+
+    class Config:
+        orm_mode = True

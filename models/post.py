@@ -9,6 +9,7 @@ class Post(Document):
     id: UUID = Field(default_factory=uuid4)
     teacher_id: UUID
     content: str
+    media_url: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
