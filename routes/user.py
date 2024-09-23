@@ -1,11 +1,15 @@
 # app/routes/user.py
 from datetime import timedelta
-from fastapi import APIRouter, HTTPException
-from models.user import Token, User, UserLogin, UserRole
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError
+from models.user import Token, User, UserInfo, UserLogin, UserRole
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
-from utils.auth import create_access_token, hash_password, verify_password
+from utils.auth import create_access_token, decode_access_token, get_current_user, hash_password, verify_password, credentials_exception
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 router = APIRouter()
 
 class UserCreate(BaseModel):
@@ -19,6 +23,22 @@ class UserUpdate(BaseModel):
     email: EmailStr = None
     password: str = None
 
+
+
+@router.get("/me", response_model=UserInfo)
+async def get_info_user(token: str = Depends(oauth2_scheme)):
+    user_id = decode_access_token(token)  # Appel à la fonction utilitaire
+    user = await User.get(UUID(user_id))
+    
+    if user is None:
+        raise credentials_exception
+    
+    return UserInfo(
+        id= user.id,
+        email= user.email,
+        username= user.username,
+        role= user.role
+    )
 
 @router.post("/signup")
 async def signup(user: UserCreate):
@@ -71,8 +91,8 @@ async def delete_user(user_id: UUID):
 
 
 @router.post("/login", response_model=Token)
-async def login(user_login: UserLogin):
-    user = await User.find_one(User.email == user_login.email)
+async def login(user_login: OAuth2PasswordRequestForm = Depends()):
+    user = await User.find_one(User.email == user_login.username)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid email or password")
     
@@ -82,3 +102,7 @@ async def login(user_login: UserLogin):
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+

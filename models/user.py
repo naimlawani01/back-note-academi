@@ -46,3 +46,11 @@ class TokenData(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+
+
+class UserInfo(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    email: str
+    username: str
+    role: str
