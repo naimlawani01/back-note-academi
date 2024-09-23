@@ -3,6 +3,8 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError
+from models.student import Student
+from models.teacher import Teacher
 from models.user import Token, User, UserInfo, UserLogin, UserRole
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
@@ -23,8 +25,6 @@ class UserUpdate(BaseModel):
     email: EmailStr = None
     password: str = None
 
-
-
 @router.get("/me", response_model=UserInfo)
 async def get_info_user(token: str = Depends(oauth2_scheme)):
     user_id = decode_access_token(token)  # Appel à la fonction utilitaire
@@ -33,12 +33,21 @@ async def get_info_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
     
+    
+    if(user.role == "student"):
+        link = await Student.find_one(Student.user_id == user.id)
+    if(user.role == "teacher"):
+        link = await Teacher.find_one(Teacher.user_id == user.id)
+
     return UserInfo(
         id= user.id,
         email= user.email,
         username= user.username,
-        role= user.role
+        role= user.role,
+        link_id= link.id
     )
+
+
 
 @router.post("/signup")
 async def signup(user: UserCreate):
@@ -63,7 +72,6 @@ async def get_user(user_id: UUID):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
-
 
 @router.put("/{user_id}")
 async def update_user(user_id: UUID, user_update: UserUpdate):

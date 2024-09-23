@@ -54,3 +54,4 @@ class UserInfo(BaseModel):
     email: str
     username: str
     role: str
+    link_id: UUID = Field(default_factory=uuid4)
